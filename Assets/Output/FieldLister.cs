@@ -16,11 +16,12 @@ namespace UnityORM
 		
 		
 		
-		public ClassDesc<T> listUp<T>(){
+		public virtual ClassDesc<T> listUp<T>(){
 			Type t = typeof(T);
 			ClassDesc<T> classInfo = new ClassDesc<T>();
 			classInfo.Name = t.Name;
 			
+			bool keyFieldIsSetByAttribute = false;
 			
 			List<FieldDesc> infoList = new List<FieldDesc>();
 			var props = t.GetProperties();
@@ -28,12 +29,18 @@ namespace UnityORM
 				if(prop.CanRead && prop.CanWrite){
 					FieldDesc info = new FieldDesc();
 					info.Prop = prop;
-					SetNames(info);
 					
-					infoList.Add(info);
-					
-					if(info.Name.ToLowerInvariant() == "id"){
-						classInfo.KeyField = info;
+					if(info.GetAttribute<IgnoreAttribute>() == null){
+						SetNames(info);
+						
+						infoList.Add(info);
+						
+						if(info.GetAttribute<KeyAttribute>() != null){
+							classInfo.KeyField = info;
+							keyFieldIsSetByAttribute = true;
+						}else if(info.Name.ToLowerInvariant() == "id" && !keyFieldIsSetByAttribute){
+							classInfo.KeyField = info;
+						} 
 					}
 					
 				}
@@ -43,12 +50,17 @@ namespace UnityORM
 				if(f.IsPublic && !f.IsStatic && !f.IsInitOnly){
 					FieldDesc info = new FieldDesc();
 					info.Field = f;
-					SetNames(info);
-					
-					if(info.Name.ToLowerInvariant() == "id"){
-						classInfo.KeyField = info;
+					if(info.GetAttribute<IgnoreAttribute>() == null){
+						SetNames(info);
+						
+						if(info.GetAttribute<KeyAttribute>() != null){
+							classInfo.KeyField = info;
+							keyFieldIsSetByAttribute = true;
+						}else if(info.Name.ToLowerInvariant() == "id" && !keyFieldIsSetByAttribute){
+							classInfo.KeyField = info;
+						}
+						infoList.Add(info);
 					}
-					infoList.Add(info);
 				}
 			}
 			
@@ -57,9 +69,19 @@ namespace UnityORM
 			return classInfo;
 		}
 		
-		void SetNames(FieldDesc desc){
-			desc.NameInJSON = desc.Name;
-			desc.NameInTable = desc.Name.ToLower(); 
+		protected virtual void SetNames(FieldDesc desc){
+			MetaInfoAttirbute att = desc.GetAttribute<MetaInfoAttirbute>();
+			
+			if(att != null && !string.IsNullOrEmpty(att.NameInJSON)){
+				desc.NameInJSON = att.NameInJSON;
+			}else{
+				desc.NameInJSON = desc.Name;
+			}
+			if(att != null && !string.IsNullOrEmpty(att.NameInTable)){
+				desc.NameInTable = att.NameInTable;
+			}else{
+				desc.NameInTable = desc.Name.ToLower(); 
+			}
 		}
 	}
 	
@@ -68,6 +90,9 @@ namespace UnityORM
 	
 	public class MetaInfoAttirbute : Attribute{
 			
+		public string NameInJSON;
+		public string NameInTable;
+		
 	}
 	
 	public class IgnoreAttribute : Attribute{
@@ -142,6 +167,19 @@ namespace UnityORM
 			return string.Format("Name:{0}",Name);
 		}
 		
+		
+		public T GetAttribute<T>() where T : Attribute{
+			if(Field != null){
+				var att = from f in Field.GetCustomAttributes(true) where f is T select f as T;
+				
+				return att.FirstOrDefault();
+			}else if(Prop != null){
+				var att = from f in Prop.GetCustomAttributes(true) where f is T select f as T;
+				
+				return att.FirstOrDefault();
+			}
+			return null;
+		}
 		
 	}
 }

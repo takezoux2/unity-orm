@@ -57,7 +57,12 @@ namespace UnityORM
 			builder.Append(") VALUES (");
 			
 			foreach( var f in desc.FieldDescs){
-				builder.Append("'" +  Escape(f.GetValue(obj).ToString()) + "',");
+				object v = f.GetValue(obj);
+				if(v != null){
+					builder.Append("'" +  Escape(v.ToString()) + "',");
+				}else{
+					builder.Append("NULL,");
+				}
 			}
 			builder.Remove(builder.Length - 1,1);
 			builder.Append(");");
@@ -70,7 +75,12 @@ namespace UnityORM
 			var builder = new StringBuilder();	
 			builder.Append("UPDATE " + desc.Name + " SET ");
 			foreach(var f in desc.FieldDescs){
-				builder.Append(f.Name + "='" + Escape(f.GetValue(obj).ToString()) + "',");
+				object v = f.GetValue(obj);
+				if(v != null){
+					builder.Append(f.Name + "='" + Escape(v.ToString()) + "',");
+				}else{
+					builder.Append(f.Name + "=NULL,");
+				}
 			}
 			builder.Remove(builder.Length -1 ,1);
 			builder.Append(" WHERE " + desc.KeyField.NameInTable + " = '" + Escape(desc.KeyField.GetValue(obj).ToString()) + "';");
