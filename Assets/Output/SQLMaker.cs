@@ -15,7 +15,7 @@ namespace UnityORM
 			var builder = new StringBuilder();	
 			builder.Append("CREATE TABLE IF NOT EXISTS " + desc.Name + "(");
 			foreach(var f in desc.FieldDescs){
-				builder.Append(f.NameInTable.ToLower() + " " + ConvertToSQLType(f.FieldType ));
+				builder.Append(f.NameInTable + " " + ConvertToSQLType(f.FieldType ));
 				if(f == desc.KeyField){
 					builder.Append(" PRIMARY KEY");
 				}
@@ -77,9 +77,9 @@ namespace UnityORM
 			foreach(var f in desc.FieldDescs){
 				object v = f.GetValue(obj);
 				if(v != null){
-					builder.Append(f.Name + "='" + Escape(v.ToString()) + "',");
+					builder.Append(f.NameInTable + "='" + Escape(v.ToString()) + "',");
 				}else{
-					builder.Append(f.Name + "=NULL,");
+					builder.Append(f.NameInTable + "=NULL,");
 				}
 			}
 			builder.Remove(builder.Length -1 ,1);

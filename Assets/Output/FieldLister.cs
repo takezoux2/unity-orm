@@ -14,6 +14,10 @@ namespace UnityORM
 		{
 		}	
 		
+		/// <summary>
+		/// Control modify names for table and json according to naming rule or not.
+		/// </summary>
+		public bool ModifyAccordingToNamingRule = true;
 		
 		
 		public virtual ClassDesc<T> listUp<T>(){
@@ -76,11 +80,16 @@ namespace UnityORM
 				desc.NameInJSON = att.NameInJSON;
 			}else{
 				desc.NameInJSON = desc.Name;
+				if(ModifyAccordingToNamingRule && !string.IsNullOrEmpty(desc.Name) && char.IsUpper( desc.Name[0])){
+					desc.NameInJSON = char.ToLower(desc.Name[0]) + desc.Name.Substring(1);
+				}
 			}
 			if(att != null && !string.IsNullOrEmpty(att.NameInTable)){
 				desc.NameInTable = att.NameInTable;
+			}else if(ModifyAccordingToNamingRule){
+				desc.NameInTable = desc.Name.ToLower();
 			}else{
-				desc.NameInTable = desc.Name.ToLower(); 
+				desc.NameInTable = desc.Name;
 			}
 		}
 	}
