@@ -38,9 +38,9 @@ namespace UnityORM
 			}
 		}
 		
-		public string GenerateSelectSQL<T>(ClassDesc<T> desc,T obj){
+		public string GenerateSelectSQL<T>(ClassDesc<T> desc,object key){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
-			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = '" + Escape(desc.KeyField.GetValue(obj).ToString()) + "';";
+			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = '" + Escape(key.ToString()) + "';";
 		}
 		
 		public string GenerateDeleteSQL<T>(ClassDesc<T> desc){

@@ -12,13 +12,22 @@ namespace UnityORM
 		public ClassDescRepository Registory = ClassDescRepository.Instance;
 		public SQLMaker SQLMaker = new SQLMaker();
 		
-		Dictionary<Type,object> descriptions = new Dictionary<Type, object>();
-		
 		public DBMapper (SqliteDatabase database)
 		{
 			this.database = database;
 		}
 		
+		public T ReadByKey<T>(object key) where T : class{
+			var desc = Registory.GetClassDesc<T>();
+			var result = database.ExecuteQuery(
+				SQLMaker.GenerateSelectSQL<T>(desc,key));
+			T[] r = ResultReader.Get<T>(result,desc);
+			if(r.Length > 0){
+				return r[0];
+			}else{
+				return null;
+			}
+		}
 		
 		public T[] Read<T>(string sql) {
 			var result = database.ExecuteQuery(sql);
@@ -26,11 +35,11 @@ namespace UnityORM
 			return ResultReader.Get<T>(result,desc);
 		}
 		
-		public int ReadTo<T>(string sql,T[] objects){
-			return ReadTo<T>(sql,objects,0,objects.Length);
+		public int ReadTo<T>(T[] objects,string sql){
+			return ReadTo<T>(objects,0,objects.Length,sql);
 		}
 		
-		public int ReadTo<T>(string sql,T[] objects,int offset,int size){
+		public int ReadTo<T>(T[] objects,int offset,int size,string sql){
 			var result = database.ExecuteQuery(sql);
 			
 			ClassDesc<T> desc = Registory.GetClassDesc<T>();
