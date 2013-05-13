@@ -162,6 +162,14 @@ namespace UnityORM
 			if(v is long){
 				if(fieldType == typeof(int)){
 					return (int)(long)v;
+				}else if(fieldType == typeof(DateTime)){
+					return new DateTime(SQLMaker.UnixTime.Ticks + (long)v * 1000 * 10);
+				}else{
+					return v;
+				}
+			}else if(v is double){
+				if(fieldType == typeof(DateTime)){
+					return new DateTime(SQLMaker.UnixTime.Ticks + (long)((double)v * 1000 * 1000 * 10));
 				}else{
 					return v;
 				}

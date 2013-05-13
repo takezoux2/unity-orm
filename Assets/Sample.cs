@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 using UnityORM;
+using System;
 
 public class Sample : MonoBehaviour {
 
@@ -19,6 +20,7 @@ public class Sample : MonoBehaviour {
 		data[0].Name = "Tarou";
 		data[0].Hoge = "fuga";
 		data[0].Age = 32;
+		data[0].LastUpdated = new DateTime(2013,4,1);
 		
 		data[1] = new UserData();
 		data[1].ID = 2;
@@ -26,8 +28,9 @@ public class Sample : MonoBehaviour {
 		data[1].Hoge = "wahoo";
 		data[1].Age = 11;
 		data[1].AddressData = "aaaaa";
+		data[1].LastUpdated = new DateTime(2013,5,1);
 		
-		
+		Debug.Log(data[0]);
 		
 		
 		var info = lister.listUp<UserData>();
@@ -83,9 +86,12 @@ public class UserData{
 	[MetaInfoAttirbute(NameInJSON = "address_data")]
 	public string AddressData{get;set;}
 	
+	public DateTime LastUpdated;
+	
 	
 	public override string ToString ()
 	{
-		return "ID:" + ID + " Name:" + Name + " Hoge:" + Hoge + " Age:" + Age + " Address:" + AddressData;
+		return "ID:" + ID + " Name:" + Name + " Hoge:" + Hoge + " Age:" + Age + " Address:" + AddressData +
+			" LastUpdated:" + LastUpdated;
 	}
 }

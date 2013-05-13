@@ -6,6 +6,9 @@ namespace UnityORM
 {
 	public class SQLMaker
 	{
+		
+		public readonly static DateTime UnixTime = new DateTime(1970,1,1);
+		
 		public SQLMaker ()
 		{
 		}
@@ -33,6 +36,8 @@ namespace UnityORM
 				return "FLOAT";
 			}else if(t == typeof(byte[])){
 				return "BLOB";
+			}else if(t == typeof(DateTime)){
+				return "INTEGER";
 			}else{
 				return "TEXT";
 			}
@@ -40,7 +45,7 @@ namespace UnityORM
 		
 		public string GenerateSelectSQL<T>(ClassDesc<T> desc,object key){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
-			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = '" + Escape(key.ToString()) + "';";
+			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
 		}
 		
 		public string GenerateDeleteSQL<T>(ClassDesc<T> desc){
@@ -58,11 +63,7 @@ namespace UnityORM
 			
 			foreach( var f in desc.FieldDescs){
 				object v = f.GetValue(obj);
-				if(v != null){
-					builder.Append("'" +  Escape(v.ToString()) + "',");
-				}else{
-					builder.Append("NULL,");
-				}
+				builder.Append(ValueToBlock(v) + ",");
 			}
 			builder.Remove(builder.Length - 1,1);
 			builder.Append(");");
@@ -76,18 +77,26 @@ namespace UnityORM
 			builder.Append("UPDATE " + desc.Name + " SET ");
 			foreach(var f in desc.FieldDescs){
 				object v = f.GetValue(obj);
-				if(v != null){
-					builder.Append(f.NameInTable + "='" + Escape(v.ToString()) + "',");
-				}else{
-					builder.Append(f.NameInTable + "=NULL,");
-				}
+				builder.Append(f.NameInTable + "=" + ValueToBlock(v) + ",");
 			}
 			builder.Remove(builder.Length -1 ,1);
-			builder.Append(" WHERE " + desc.KeyField.NameInTable + " = '" + Escape(desc.KeyField.GetValue(obj).ToString()) + "';");
+			builder.Append(" WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(desc.KeyField.GetValue(obj)) + ";");
 			
 			return builder.ToString();
 		}
 		
+		
+		string ValueToBlock(object v){
+			if(v == null){
+				return "NULL";
+			}else{
+				if( v is DateTime){
+					return ((long)(((DateTime)v) - UnixTime).TotalMilliseconds).ToString();
+				}else{
+					return "'" + Escape(v.ToString()) + "'";
+				}
+			}
+		}
 		
 		public string Escape(string str){
 			return str.Replace("\\","\\\\").Replace("'","\\'").Replace("%","\\%");

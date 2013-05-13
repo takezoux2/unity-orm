@@ -97,10 +97,8 @@ namespace UnityORM
 					Debug.Log("No updates.Insert!");
 					string insert = SQLMaker.GenerateInsertSQL(desc,obj);
 					int r2 = database.ExecuteNonQuery(insert);
-					Debug.Log("ResultCode = " + r2);
-					
+					Debug.Log("ResultCode = " + r2);	
 				}
-				
 			}catch(SqliteException e){
 				Debug.Log("Fail to update.Insert!");
 				string insert = SQLMaker.GenerateInsertSQL(desc,obj);

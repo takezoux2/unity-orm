@@ -8,6 +8,8 @@ namespace UnityORM
 	public class JSONMapper
 	{
 		
+		public static readonly DateTime UnixTime = new DateTime(1970,1,1);
+		
 		ClassDescRepository Repository = ClassDescRepository.Instance;
 		
 		
@@ -84,12 +86,20 @@ namespace UnityORM
 				Dictionary<string,object> dict = new Dictionary<string, object>();
 				
 				foreach(var field in classDesc.FieldDescs){
-					dict.Add(field.NameInJSON,field.GetValue(obj));
+					dict.Add(field.NameInJSON,WriteCastIfNeeded(field.GetValue(obj)));
 				}
 				jsonObjs.Add(dict);
 			}
 			
 			return Json.Serialize(jsonObjs);
+		}
+		
+		object WriteCastIfNeeded(object v){
+			if(v is DateTime){
+				return (((DateTime)v) - UnixTime).TotalMilliseconds;
+			}else{
+				return v;
+			}
 		}
 	}
 }
