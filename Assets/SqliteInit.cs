@@ -37,7 +37,8 @@ public static class SqliteInit
 		
 		Evolution.Evolute("UserData",
 			new List<string>(){
-			@"CREATE TABLE UserData(id INTEGER PRIMARY_KEY,name TEXT,hoge TEXT); "
+			//@"CREATE TABLE UserData(id INTEGER PRIMARY_KEY,name TEXT,hoge TEXT); "
+			new SQLMaker().GenerateCreateTableSQL<UserData>(ClassDescRepository.Instance.GetClassDesc<UserData>())
 		});
 		
 		

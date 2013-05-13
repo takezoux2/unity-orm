@@ -9,7 +9,7 @@ namespace UnityORM
 	{
 		SqliteDatabase database;
 		public SQLResultReader ResultReader = new SQLResultReader();
-		public FieldLister Lister = new FieldLister();
+		public ClassDescRepository Registory = ClassDescRepository.Instance;
 		public SQLMaker SQLMaker = new SQLMaker();
 		
 		Dictionary<Type,object> descriptions = new Dictionary<Type, object>();
@@ -19,21 +19,10 @@ namespace UnityORM
 			this.database = database;
 		}
 		
-		public ClassDesc<T> GetClassDesc<T>(){
-			
-			ClassDesc<T> desc;
-			if(descriptions.ContainsKey(typeof(T))){
-				desc = descriptions[typeof(T)] as ClassDesc<T>;
-			}else{
-				desc = Lister.listUp<T>();
-				descriptions[typeof(T)] = desc;
-			}
-			return desc;
-		}
 		
 		public T[] Read<T>(string sql) {
 			var result = database.ExecuteQuery(sql);
-			var desc = GetClassDesc<T>();
+			var desc = Registory.GetClassDesc<T>();
 			return ResultReader.Get<T>(result,desc);
 		}
 		
@@ -44,7 +33,7 @@ namespace UnityORM
 		public int ReadTo<T>(string sql,T[] objects,int offset,int size){
 			var result = database.ExecuteQuery(sql);
 			
-			ClassDesc<T> desc = GetClassDesc<T>();
+			ClassDesc<T> desc = Registory.GetClassDesc<T>();
 			
 			return ResultReader.SetTo(result,0,desc,objects,offset,size);
 		}
@@ -60,7 +49,7 @@ namespace UnityORM
 		/// The 1st type parameter.
 		/// </typeparam>
 		public void ReplaceAll<T>(T[] objects){
-			var desc = GetClassDesc<T>();
+			var desc = Registory.GetClassDesc<T>();
 			string delete = SQLMaker.GenerateDeleteSQL<T>(desc);
 			database.ExecuteNonQuery(delete);
 			
@@ -71,14 +60,14 @@ namespace UnityORM
 		}
 		
 		public void UpdateAll<T>(T[] objects){
-			var desc = GetClassDesc<T>();
+			var desc = Registory.GetClassDesc<T>();
 			foreach(T obj in objects){
 				string update = SQLMaker.GenerateUpdateSQL(desc,obj);
 				database.ExecuteNonQuery(update);
 			}
 		}
 		public void InsertAll<T>(T[] objects){
-			var desc = GetClassDesc<T>();
+			var desc = Registory.GetClassDesc<T>();
 			foreach(T obj in objects){
 				string insert = SQLMaker.GenerateInsertSQL(desc,obj);
 				database.ExecuteNonQuery(insert);
@@ -91,7 +80,7 @@ namespace UnityORM
 		}
 	
 		public void UpdateOrInsert<T>(T obj){
-			var desc = GetClassDesc<T>();
+			var desc = Registory.GetClassDesc<T>();
 			string update = SQLMaker.GenerateUpdateSQL(desc,obj);
 			try{
 				int effectedRows = database.ExecuteNonQuery(update);

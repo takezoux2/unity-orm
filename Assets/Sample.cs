@@ -16,6 +16,7 @@ public class Sample : MonoBehaviour {
 		data.ID = 2;
 		data.Name = "hoge";
 		data.Hoge = "fuga";
+		data.Age = 32;
 		
 		var info = lister.listUp<UserData>();
 		
@@ -33,7 +34,19 @@ public class Sample : MonoBehaviour {
 		mapper.UpdateOrInsert(data);
 		
 		UserData[] fromDb = mapper.Read<UserData>("SELECT * FROM UserData WHERE ID={0}".SQLFormat(2));
-		Debug.Log(fromDb[0].Hoge);
+		Debug.Log(fromDb[0]);
+		
+		
+		JSONMapper jsonMapper = new JSONMapper();
+		
+		string json = jsonMapper.Write<UserData>(fromDb);
+		UserData[] fromJson = jsonMapper.Read<UserData>(json);
+		
+		Debug.Log("Json = " + json);
+		
+		Debug.Log(fromJson[0]);
+		
+		
 	}
 	
 	// Update is called once per frame
@@ -46,8 +59,18 @@ public class Sample : MonoBehaviour {
 public class UserData{
 	public int ID;
 	
-	[Ignore]
 	public string Name;
 	
+	public int Age;
+	
+	[Ignore]
 	public string Hoge{get;set;}
+	
+	
+	
+	
+	public override string ToString ()
+	{
+		return "ID:" + ID + " Name:" + Name + " Hoge:" + Hoge + " Age:" + Age;
+	}
 }
