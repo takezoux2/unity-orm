@@ -71,7 +71,7 @@ public class Sample : MonoBehaviour {
 
 
 public class UserData{
-	public int ID;
+	public long ID;
 	
 	public string Name;
 	

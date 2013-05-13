@@ -170,13 +170,13 @@ namespace UnityORM
 		
 		public T GetAttribute<T>() where T : Attribute{
 			if(Field != null){
-				var att = from f in Field.GetCustomAttributes(true) where f is T select f as T;
-				
-				return att.FirstOrDefault();
+				var att = Attribute.GetCustomAttributes(Field,typeof(T),true);
+				if(att.Length > 0) return att[0] as T;
+				else return null;
 			}else if(Prop != null){
-				var att = from f in Prop.GetCustomAttributes(true) where f is T select f as T;
-				
-				return att.FirstOrDefault();
+				var att = Attribute.GetCustomAttributes(Prop,typeof(T),true);
+				if(att.Length > 0) return att[0] as T;
+				else return null;
 			}
 			return null;
 		}
