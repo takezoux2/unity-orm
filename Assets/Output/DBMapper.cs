@@ -12,6 +12,8 @@ namespace UnityORM
 		public ClassDescRepository Registory = ClassDescRepository.Instance;
 		public SQLMaker SQLMaker = new SQLMaker();
 		
+		public SqliteDatabase Database{get{return database;}}
+		
 		public DBMapper (SqliteDatabase database)
 		{
 			this.database = database;
@@ -27,6 +29,11 @@ namespace UnityORM
 			}else{
 				return null;
 			}
+		}
+		
+		public T[] ReadAll<T>(){
+			var desc = Registory.GetClassDesc<T>();
+			return Read<T>("SELECT * FROM " + desc.Name);
 		}
 		
 		public T[] Read<T>(string sql) {
@@ -59,7 +66,7 @@ namespace UnityORM
 		/// </typeparam>
 		public void ReplaceAll<T>(T[] objects){
 			var desc = Registory.GetClassDesc<T>();
-			string delete = SQLMaker.GenerateDeleteSQL<T>(desc);
+			string delete = SQLMaker.GenerateDeleteAllSQL<T>(desc);
 			database.ExecuteNonQuery(delete);
 			
 			foreach(T obj in objects){
@@ -105,6 +112,19 @@ namespace UnityORM
 				database.ExecuteNonQuery(insert);
 			}
 		}
+		
+		public void DeleteAll<T>(){
+			var desc = Registory.GetClassDesc<T>();
+			database.ExecuteNonQuery(SQLMaker.GenerateDeleteAllSQL<T>(desc));
+		}
+		
+		public void DeleteByKey<T>(object key){
+			var desc = Registory.GetClassDesc<T>();
+			database.ExecuteNonQuery(SQLMaker.GenerateDeleteSQL<T>(desc,key));
+		}
+		
+		
+		
 		
 		
 	}

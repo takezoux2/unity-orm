@@ -21,7 +21,14 @@ namespace UnityORM.Helper{
 			return d;
 		}
 		
-		
+		public static string Jasonize( params object[] dictValues){
+			
+			Dictionary<string,object> d = new Dictionary<string, object>();
+			for(int i = 1;i < dictValues.Length;i += 2){
+				d.Add(dictValues[i-1].ToString(),dictValues[i]);
+			}
+			return UnityORM.Json.Serialize(d);
+		}
 		
 		
 		public static T GetGet<T>(this IDictionary<string,object> dict,string key1,string key2){

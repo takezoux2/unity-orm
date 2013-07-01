@@ -2,6 +2,7 @@ using System;
 
 using System.Collections.Generic;
 using UnityORM.Helper;
+using System.Collections;
 
 namespace UnityORM
 {
@@ -20,14 +21,22 @@ namespace UnityORM
 		
 		public T[] Read<T>(string json){
 			var jObjs = Json.Deserialize(json);
+			return ReadFromJSONObject<T>(jObjs);
+		}
+		
+		public T[] ReadFromJSONObject<T>(object jObjs){
 			int size;
+			
 			if(jObjs is Dictionary<string,object>)
 			{
 				size = 1;
-			}else if(jObjs is List<object>){
-				size = (jObjs as List<object>).Count;
+			}else if(jObjs is System.Collections.IList){
+				size = (jObjs as System.Collections.IList).Count;
+			}else if(jObjs.GetType().IsArray){
+				size = (jObjs as object[]).Length;
 			}else{
-				throw new Exception("Wrong json object format.Must be List<Dictionary<stirng,object>> or Dictionary<string,object>");
+				throw new Exception(
+					@"Wrong json object format.Must be List<Dictionary<stirng,object>> or Dictionary<string,object>.But was " + jObjs.GetType().Name);
 			}
 			
 			T[] objects = ReflectionSupport.CreateNewInstances<T>(size);
@@ -48,8 +57,23 @@ namespace UnityORM
 				LoadObj(jObj,obj);
 				
 				return 1;
-			}else if(jsonObj is List<object>){
-				var jobjs = jsonObj as List<object>;
+			}else if(jsonObj.GetType().IsArray){
+				var jobjs = jsonObj as object[];
+				
+				int readSize = Math.Min(size,jobjs.Length);
+				if(size < 0){
+					readSize = Math.Min(jobjs.Length,objects.Length - offset);
+				}
+				for(int i = 0;i < readSize;i++){
+					var jobj = jobjs[i] as Dictionary<string,object>;
+					if(jobj == null) throw new Exception("Wrong json object format.Must be List<Dictionary<stirng,object>>");
+					LoadObj(jobj,objects[offset + i]);
+					
+				}
+				return readSize;
+				
+			}else if(jsonObj is IList){
+				var jobjs = jsonObj as IList;
 				
 				int readSize = Math.Min(size,jobjs.Count);
 				if(size < 0){
@@ -75,9 +99,8 @@ namespace UnityORM
 				}
 			}
 		}
-						
 		
-		public string Write<T>(T[] objects){
+		public object ToJsonObject<T>(T[] objects){
 			var classDesc = Repository.GetClassDesc<T>();
 			
 			List<Dictionary<string,object>> jsonObjs = new List<Dictionary<string, object>>();
@@ -90,13 +113,19 @@ namespace UnityORM
 				}
 				jsonObjs.Add(dict);
 			}
+			return jsonObjs;
+		}
+		
+		public string Write<T>(T[] objects){
+			
+			object jsonObjs = ToJsonObject<T>(objects);
 			
 			return Json.Serialize(jsonObjs);
 		}
 		
 		object WriteCastIfNeeded(object v){
 			if(v is DateTime){
-				return (((DateTime)v) - UnixTime).TotalMilliseconds;
+				return (((DateTime)v) - UnixTime).TotalSeconds;
 			}else{
 				return v;
 			}

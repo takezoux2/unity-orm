@@ -39,11 +39,14 @@ namespace UnityORM
 						
 						infoList.Add(info);
 						
-						if(info.GetAttribute<KeyAttribute>() != null){
+						var keyAttribute = info.GetAttribute<KeyAttribute>();
+						if(keyAttribute != null){
 							classInfo.KeyField = info;
 							keyFieldIsSetByAttribute = true;
+							classInfo.AutoIncrement = keyAttribute.AutoIncrement;
 						}else if(info.Name.ToLowerInvariant() == "id" && !keyFieldIsSetByAttribute){
 							classInfo.KeyField = info;
+							classInfo.AutoIncrement = false;
 						} 
 					}
 					
@@ -94,22 +97,10 @@ namespace UnityORM
 		}
 	}
 	
-	public class KeyAttribute : Attribute{
-	}
-	
-	public class MetaInfoAttirbute : Attribute{
-			
-		public string NameInJSON;
-		public string NameInTable;
-		
-	}
-	
-	public class IgnoreAttribute : Attribute{
-	}
-			
 	public class ClassDesc<T>{
 		
 		public string Name;
+		public bool AutoIncrement = false;
 		public FieldDesc KeyField;
 		public List<FieldDesc> FieldDescs;
 		
@@ -170,6 +161,18 @@ namespace UnityORM
 			}else if(v is double){
 				if(fieldType == typeof(DateTime)){
 					return new DateTime(SQLMaker.UnixTime.Ticks + (long)((double)v * 1000 * 1000 * 10));
+				}else{
+					return v;
+				}
+			}else if(v is string){
+				if(fieldType == typeof(int)){
+					return int.Parse((string)v);
+				}else if(fieldType == typeof(long)){
+					return long.Parse((string)v);
+				}else if(fieldType == typeof(double)){
+					return double.Parse((string)v);
+				}else if(fieldType == typeof(DateTime)){
+					return CastIfNeeded(fieldType, long.Parse((string)v));
 				}else{
 					return v;
 				}

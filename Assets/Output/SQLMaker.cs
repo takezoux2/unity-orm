@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Collections.Generic;
 
 
 namespace UnityORM
@@ -22,6 +23,9 @@ namespace UnityORM
 				if(f == desc.KeyField){
 					builder.Append(" PRIMARY KEY");
 				}
+				if( desc.AutoIncrement){
+					builder.Append(" AUTOINCREMENT");
+				}
 				builder.Append(",");
 			}
 			builder.Remove(builder.Length - 1,1);
@@ -43,25 +47,40 @@ namespace UnityORM
 			}
 		}
 		
+		public string GenerateSelectAllSQL<T>(ClassDesc<T> desc){
+			return "SELECT * FROM " + desc.Name + ";";
+		}
+		
 		public string GenerateSelectSQL<T>(ClassDesc<T> desc,object key){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
 			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
 		}
 		
-		public string GenerateDeleteSQL<T>(ClassDesc<T> desc){
+		public string GenerateDeleteAllSQL<T>(ClassDesc<T> desc){
 			return "DELETE FROM " + desc.Name + ";";
+		}
+		public string GenerateDeleteSQL<T>(ClassDesc<T> desc,object key){
+			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
+			return "DELETE * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
 		}
 		
 		public string GenerateInsertSQL<T>(ClassDesc<T> desc,T obj){
 			var builder = new StringBuilder();	
 			builder.Append("INSERT INTO " + desc.Name + " (");
-			foreach( var f in desc.FieldDescs){
+			
+			var fields = desc.FieldDescs;
+			if(desc.AutoIncrement){
+				fields = new List<UnityORM.FieldDesc>(fields);
+				fields.Remove(desc.KeyField);
+			}
+			
+			foreach( var f in fields){
 				builder.Append(f.NameInTable + ",");
 			}
 			builder.Remove(builder.Length - 1,1);
 			builder.Append(") VALUES (");
 			
-			foreach( var f in desc.FieldDescs){
+			foreach( var f in fields){
 				object v = f.GetValue(obj);
 				builder.Append(ValueToBlock(v) + ",");
 			}
@@ -99,7 +118,7 @@ namespace UnityORM
 		}
 		
 		public string Escape(string str){
-			return str.Replace("\\","\\\\").Replace("'","\\'").Replace("%","\\%");
+			return str.Replace("'","''");
 		}
 		
 		
