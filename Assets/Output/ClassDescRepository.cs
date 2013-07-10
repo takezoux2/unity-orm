@@ -26,14 +26,19 @@ namespace UnityORM
 		}
 		
 		
-		public ClassDesc<T> GetClassDesc<T>(){
+		public ClassDesc GetClassDesc<T>(){
+			return GetClassDesc(typeof(T));
+		}
 			
-			ClassDesc<T> desc;
-			if(descriptions.ContainsKey(typeof(T))){
-				desc = descriptions[typeof(T)] as ClassDesc<T>;
+		public ClassDesc GetClassDesc(Type t){
+				
+			
+			ClassDesc desc;
+			if(descriptions.ContainsKey(t)){
+				desc = descriptions[t] as ClassDesc;
 			}else{
-				desc = Lister.listUp<T>();
-				descriptions[typeof(T)] = desc;
+				desc = Lister.ListUp(t);
+				descriptions[t] = desc;
 			}
 			return desc;
 		}

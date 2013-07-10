@@ -49,7 +49,7 @@ namespace UnityORM
 		public int ReadTo<T>(T[] objects,int offset,int size,string sql){
 			var result = database.ExecuteQuery(sql);
 			
-			ClassDesc<T> desc = Registory.GetClassDesc<T>();
+			ClassDesc desc = Registory.GetClassDesc<T>();
 			
 			return ResultReader.SetTo(result,0,desc,objects,offset,size);
 		}

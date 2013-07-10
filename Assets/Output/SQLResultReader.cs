@@ -11,17 +11,17 @@ namespace UnityORM
 		{
 		}
 		
-		public T[] Get<T>(DataTable result,ClassDesc<T> desc){
+		public T[] Get<T>(DataTable result,ClassDesc desc){
 			T[] objects = ReflectionSupport.CreateNewInstances<T>(result.Rows.Count);
 			SetTo(result,0,desc,objects,0,objects.Length);
 			return objects;
 		}
 		
-		public int SetTo<T>(DataTable result,ClassDesc<T> desc,T[] objects){
+		public int SetTo<T>(DataTable result,ClassDesc desc,T[] objects){
 			return SetTo<T>(result,0,desc,objects,0,objects.Length);
 		}
 		
-		public int SetTo<T>(DataTable result,int resultOffset,ClassDesc<T> desc,T[] objects,int offset,int length){
+		public int SetTo<T>(DataTable result,int resultOffset,ClassDesc desc,T[] objects,int offset,int length){
 			int readCount = Math.Min(result.Rows.Count - resultOffset,length);
 			if(length < 0){
 				readCount = result.Rows.Count - resultOffset;
@@ -32,7 +32,7 @@ namespace UnityORM
 				
 				foreach(var f in desc.FieldDescs){
 					if(row.ContainsKey(f.NameInTable)){
-						f.SetValue(obj,row[f.NameInTable]);
+						f.SetFromDb(obj,row[f.NameInTable]);
 					}
 				}
 				

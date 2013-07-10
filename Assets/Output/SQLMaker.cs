@@ -14,7 +14,7 @@ namespace UnityORM
 		{
 		}
 		
-		public string GenerateCreateTableSQL<T>(ClassDesc<T> desc){
+		public string GenerateCreateTableSQL<T>(ClassDesc desc){
 			
 			var builder = new StringBuilder();	
 			builder.Append("CREATE TABLE IF NOT EXISTS " + desc.Name + "(");
@@ -47,24 +47,24 @@ namespace UnityORM
 			}
 		}
 		
-		public string GenerateSelectAllSQL<T>(ClassDesc<T> desc){
+		public string GenerateSelectAllSQL<T>(ClassDesc desc){
 			return "SELECT * FROM " + desc.Name + ";";
 		}
 		
-		public string GenerateSelectSQL<T>(ClassDesc<T> desc,object key){
+		public string GenerateSelectSQL<T>(ClassDesc desc,object key){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
 			return "SELECT * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
 		}
 		
-		public string GenerateDeleteAllSQL<T>(ClassDesc<T> desc){
+		public string GenerateDeleteAllSQL<T>(ClassDesc desc){
 			return "DELETE FROM " + desc.Name + ";";
 		}
-		public string GenerateDeleteSQL<T>(ClassDesc<T> desc,object key){
+		public string GenerateDeleteSQL<T>(ClassDesc desc,object key){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
-			return "DELETE * FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
+			return "DELETE FROM " + desc.Name + " WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(key) + ";";
 		}
 		
-		public string GenerateInsertSQL<T>(ClassDesc<T> desc,T obj){
+		public string GenerateInsertSQL<T>(ClassDesc desc,T obj){
 			var builder = new StringBuilder();	
 			builder.Append("INSERT INTO " + desc.Name + " (");
 			
@@ -81,7 +81,7 @@ namespace UnityORM
 			builder.Append(") VALUES (");
 			
 			foreach( var f in fields){
-				object v = f.GetValue(obj);
+				object v = f.GetForDb(obj);
 				builder.Append(ValueToBlock(v) + ",");
 			}
 			builder.Remove(builder.Length - 1,1);
@@ -90,16 +90,16 @@ namespace UnityORM
 			return builder.ToString();
 		}
 		
-		public string GenerateUpdateSQL<T>(ClassDesc<T> desc,T obj){
+		public string GenerateUpdateSQL<T>(ClassDesc desc,T obj){
 			if(desc.KeyField == null) throw new Exception("Class " + desc.Name + " hasn't key field");
 			var builder = new StringBuilder();	
 			builder.Append("UPDATE " + desc.Name + " SET ");
 			foreach(var f in desc.FieldDescs){
-				object v = f.GetValue(obj);
+				object v = f.GetForDb(obj);
 				builder.Append(f.NameInTable + "=" + ValueToBlock(v) + ",");
 			}
 			builder.Remove(builder.Length -1 ,1);
-			builder.Append(" WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(desc.KeyField.GetValue(obj)) + ";");
+			builder.Append(" WHERE " + desc.KeyField.NameInTable + " = " + ValueToBlock(desc.KeyField.GetForDb(obj)) + ";");
 			
 			return builder.ToString();
 		}
@@ -109,11 +109,7 @@ namespace UnityORM
 			if(v == null){
 				return "NULL";
 			}else{
-				if( v is DateTime){
-					return ((long)(((DateTime)v) - UnixTime).TotalMilliseconds).ToString();
-				}else{
-					return "'" + Escape(v.ToString()) + "'";
-				}
+				return "'" + Escape(v.ToString()) + "'";
 			}
 		}
 		

@@ -12,6 +12,13 @@ namespace UnityORM
 	{
 		public FieldLister ()
 		{
+			converters.Add(typeof(string),new StringValueConverter());
+			converters.Add(typeof(int),new IntValueConverter());
+			converters.Add(typeof(long),new LongValueConverter());
+			converters.Add(typeof(float),new FloatValueConverter());
+			converters.Add(typeof(double),new DoubleValueConverter());
+			converters.Add(typeof(DateTime),new DateTimeValueConverter());
+			converters.Add(typeof(Dictionary<string,object>),new DictionaryValueConverter());
 		}	
 		
 		/// <summary>
@@ -19,10 +26,25 @@ namespace UnityORM
 		/// </summary>
 		public bool ModifyAccordingToNamingRule = true;
 		
+		Dictionary<Type,ValueConverter> converters = new Dictionary<Type, ValueConverter>();
 		
-		public virtual ClassDesc<T> listUp<T>(){
-			Type t = typeof(T);
-			ClassDesc<T> classInfo = new ClassDesc<T>();
+		ValueConverter GetConverter(Type t){
+			if(converters.ContainsKey(t)){
+				return converters[t];
+			}else{
+				ListUp(t);
+				return converters[t];
+			}
+		}
+		
+		public virtual ClassDesc ListUp<T>(){
+			return ListUp(typeof(T));
+		}
+		public virtual ClassDesc ListUp(Type t){
+			ClassDesc classInfo = new ClassDesc(t);
+			if(!converters.ContainsKey(t)){
+				converters.Add(t,new ClassValueConverter(classInfo));
+			}
 			classInfo.Name = t.Name;
 			
 			bool keyFieldIsSetByAttribute = false;
@@ -33,6 +55,7 @@ namespace UnityORM
 				if(prop.CanRead && prop.CanWrite){
 					FieldDesc info = new FieldDesc();
 					info.Prop = prop;
+					info.ValueConverter = GetConverter(info.FieldType);
 					
 					if(info.GetAttribute<IgnoreAttribute>() == null){
 						SetNames(info);
@@ -57,6 +80,8 @@ namespace UnityORM
 				if(f.IsPublic && !f.IsStatic && !f.IsInitOnly){
 					FieldDesc info = new FieldDesc();
 					info.Field = f;
+					info.ValueConverter = GetConverter(info.FieldType);
+					
 					if(info.GetAttribute<IgnoreAttribute>() == null){
 						SetNames(info);
 						
@@ -97,12 +122,17 @@ namespace UnityORM
 		}
 	}
 	
-	public class ClassDesc<T>{
+	public class ClassDesc{
 		
+		public Type ClassType;
 		public string Name;
 		public bool AutoIncrement = false;
 		public FieldDesc KeyField;
 		public List<FieldDesc> FieldDescs;
+		
+		public ClassDesc(Type classType){
+			this.ClassType = classType;
+		}
 		
 		public override string ToString ()
 		{
@@ -117,6 +147,7 @@ namespace UnityORM
 		
 		public PropertyInfo Prop;
 		public FieldInfo Field;
+		public ValueConverter ValueConverter;
 		
 		public string Name{
 			get{
@@ -135,52 +166,32 @@ namespace UnityORM
 		public string NameInTable;
 		public string NameInJSON;
 		
-		public object GetValue(object obj){
+		public object GetForJson(object obj){
+			return ValueConverter.ToJson(GetValue(obj));	
+		}
+		public object GetForDb(object obj){
+			return ValueConverter.ToDb(GetValue(obj));
+		}
+		
+		object GetValue(object obj){
 			if(Prop != null) return Prop.GetValue(obj,new object[0]);
 			else return Field.GetValue(obj);
 		}
 		
+		public void SetFromJson(object obj,object v){
+			SetValue(obj,ValueConverter.FromJson(v));
+		}
+		public void SetFromDb(object obj,object v){
+			SetValue(obj,ValueConverter.FromDb(v));
+		}
 		
-		
-		public void SetValue(object obj,object v){
+		void SetValue(object obj,object v){
 			if(Prop != null){
-				Prop.SetValue(obj,CastIfNeeded(Prop.PropertyType,v),new object[0]);
+				Prop.SetValue(obj,v,new object[0]);
 			}else{
-				Field.SetValue(obj,CastIfNeeded(Field.FieldType,v));
+				Field.SetValue(obj,v);
 			}
 		}
-		public object CastIfNeeded(Type fieldType,object v){
-			if(v is long){
-				if(fieldType == typeof(int)){
-					return (int)(long)v;
-				}else if(fieldType == typeof(DateTime)){
-					return new DateTime(SQLMaker.UnixTime.Ticks + (long)v * 1000 * 10);
-				}else{
-					return v;
-				}
-			}else if(v is double){
-				if(fieldType == typeof(DateTime)){
-					return new DateTime(SQLMaker.UnixTime.Ticks + (long)((double)v * 1000 * 1000 * 10));
-				}else{
-					return v;
-				}
-			}else if(v is string){
-				if(fieldType == typeof(int)){
-					return int.Parse((string)v);
-				}else if(fieldType == typeof(long)){
-					return long.Parse((string)v);
-				}else if(fieldType == typeof(double)){
-					return double.Parse((string)v);
-				}else if(fieldType == typeof(DateTime)){
-					return CastIfNeeded(fieldType, long.Parse((string)v));
-				}else{
-					return v;
-				}
-			}else{
-				return v;
-			}
-		}
-		
 		
 		public override string ToString ()
 		{

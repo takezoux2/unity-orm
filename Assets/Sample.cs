@@ -21,6 +21,8 @@ public class Sample : MonoBehaviour {
 		data[0].Hoge = "fuga";
 		data[0].Age = 32;
 		data[0].LastUpdated = new DateTime(2013,4,1);
+		data[0].NestedClass.Fuga = "bbbb";
+		data[0].NestedClass.Hoge = 23;
 		
 		data[1] = new UserData();
 		data[1].ID = 2;
@@ -33,7 +35,7 @@ public class Sample : MonoBehaviour {
 		Debug.Log(data[0]);
 		
 		
-		var info = lister.listUp<UserData>();
+		var info = lister.ListUp<UserData>();
 		
 		Debug.Log(info);
 		
@@ -64,6 +66,7 @@ public class Sample : MonoBehaviour {
 		Debug.Log(fromJson[1]);
 		
 		
+		
 	}
 	
 	// Update is called once per frame
@@ -88,10 +91,19 @@ public class UserData{
 	
 	public DateTime LastUpdated;
 	
+	public Nested NestedClass = new Nested();
 	
 	public override string ToString ()
 	{
 		return "ID:" + ID + " Name:" + Name + " Hoge:" + Hoge + " Age:" + Age + " Address:" + AddressData +
-			" LastUpdated:" + LastUpdated;
+			" LastUpdated:" + LastUpdated + " NestedClass:" + NestedClass;
+	}
+}
+public class Nested{
+	public int Hoge;
+	public string Fuga;
+	public override string ToString ()
+	{
+		return "Hoge : " + Hoge + " Fuga:" + Fuga;
 	}
 }

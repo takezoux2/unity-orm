@@ -131,7 +131,7 @@ namespace UnityORM
 	        if (result != SQLITE_DONE)
 	        {
 				int errorCode = sqlite3_errcode(_connection);
-	            throw new SqliteException(errorCode,"Could not execute SQL statement.");
+	            throw new SqliteException(errorCode,"Could not execute SQL statement.ErrorCode:" + errorCode);
 	        }
 	        Finalize(stmHandle);
 			return sqlite3_changes(_connection);

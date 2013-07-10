@@ -17,6 +17,11 @@ namespace UnityORM
 			return objects;
 		}
 		
+		public static object CreateNewInstance(Type t){
+			var constructor = t.GetConstructor(new Type[0]);
+			return constructor.Invoke(new object[0]);
+		}
+		
 		public ReflectionSupport ()
 		{
 		}
