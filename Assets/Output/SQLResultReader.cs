@@ -33,6 +33,8 @@ namespace UnityORM
 				foreach(var f in desc.FieldDescs){
 					if(row.ContainsKey(f.NameInTable)){
 						f.SetFromDb(obj,row[f.NameInTable]);
+					}else if(row.ContainsKey(f.NameInTable.ToLower())){
+						f.SetFromDb(obj,row[f.NameInTable.ToLower()]);
 					}
 				}
 				

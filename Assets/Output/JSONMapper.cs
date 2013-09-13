@@ -46,13 +46,13 @@ namespace UnityORM
 					@"Wrong json object format.Must be List<Dictionary<stirng,object>> or Dictionary<string,object>.But was " + jObjs.GetType().Name);
 			}
 			
-			object[] objects = new object[size];
-			for(int i=0;i<objects.Length;i++){
-				objects[i]=ReflectionSupport.CreateNewInstance(t);
+			Array objects =  Array.CreateInstance(t,size);
+			for(int i=0;i<size;i++){
+				objects.SetValue(ReflectionSupport.CreateNewInstance(t),i);
 			}
 			
-			LoadFromJSONObject(t,jObjs,objects,0,size);
-			return objects;
+			LoadFromJSONObject(t,jObjs,(object[])objects,0,size);
+			return (object[])objects;
 		}
 		
 		public T[] ReadFromJSONObject<T>(object jObjs){
@@ -142,10 +142,10 @@ namespace UnityORM
 		public object ToJsonObject(params object[] objects){
 			
 			List<Dictionary<string,object>> jsonObjs = new List<Dictionary<string, object>>();
-			
 			foreach(var obj in objects){
 				Dictionary<string,object> dict = new Dictionary<string, object>();
 				if(obj == null) continue;
+				
 				var classDesc = Repository.GetClassDesc(obj.GetType());
 				foreach(var field in classDesc.FieldDescs){
 					dict.Add(field.NameInJSON,field.GetForJson(obj) );

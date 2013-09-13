@@ -17,8 +17,10 @@ namespace UnityORM
 			converters.Add(typeof(long),new LongValueConverter());
 			converters.Add(typeof(float),new FloatValueConverter());
 			converters.Add(typeof(double),new DoubleValueConverter());
+			converters.Add(typeof(bool),new BoolValueConverter());
 			converters.Add(typeof(DateTime),new DateTimeValueConverter());
 			converters.Add(typeof(Dictionary<string,object>),new DictionaryValueConverter());
+		
 		}	
 		
 		/// <summary>
@@ -29,6 +31,7 @@ namespace UnityORM
 		Dictionary<Type,ValueConverter> converters = new Dictionary<Type, ValueConverter>();
 		
 		ValueConverter GetConverter(Type t){
+			
 			if(converters.ContainsKey(t)){
 				return converters[t];
 			}else{
@@ -41,9 +44,18 @@ namespace UnityORM
 			return ListUp(typeof(T));
 		}
 		public virtual ClassDesc ListUp(Type t){
-			ClassDesc classInfo = new ClassDesc(t);
-			if(!converters.ContainsKey(t)){
-				converters.Add(t,new ClassValueConverter(classInfo));
+			ClassDesc classInfo;// = new ClassDesc(t);
+			
+			if(t.IsArray){
+				classInfo = new ClassDesc(t.GetElementType());
+				if(!converters.ContainsKey(t)){
+					converters.Add(t,new ArrayValueConverter(classInfo));
+				}
+			}else{
+				classInfo = new ClassDesc(t);
+				if(!converters.ContainsKey(t)){
+					converters.Add(t,new ClassValueConverter(classInfo));
+				}
 			}
 			classInfo.Name = t.Name;
 			
@@ -114,8 +126,8 @@ namespace UnityORM
 			}
 			if(att != null && !string.IsNullOrEmpty(att.NameInTable)){
 				desc.NameInTable = att.NameInTable;
-			}else if(ModifyAccordingToNamingRule){
-				desc.NameInTable = desc.Name.ToLower();
+//			}else if(ModifyAccordingToNamingRule){
+//				desc.NameInTable = desc.Name.ToLower();
 			}else{
 				desc.NameInTable = desc.Name;
 			}

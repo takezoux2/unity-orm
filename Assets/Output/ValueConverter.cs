@@ -110,22 +110,56 @@ namespace UnityORM
 			if(o == null){
 				return new DateTime(0);
 			}else if(o is long){
-				return new DateTime(SQLMaker.UnixTime.Ticks + (long)o * 1000 * 10);
+				return new DateTime(SQLMaker.UnixTime.Ticks + (long)o * 1000 * 1000 * 10);
 			}else if(o is int){
-				return new DateTime(SQLMaker.UnixTime.Ticks + (int)o * 1000 * 10);
+				return new DateTime(SQLMaker.UnixTime.Ticks + ((long)(int)o) * 1000 * 1000 * 10);
 			}else if(o is double){
 				return new DateTime(SQLMaker.UnixTime.Ticks + (long)((double)o * 1000 * 1000 * 10));
 			}else if(o is float){
 				return new DateTime(SQLMaker.UnixTime.Ticks + (long)((float)o * 1000 * 1000 * 10));
 			}else{
-				return new DateTime(SQLMaker.UnixTime.Ticks + long.Parse(o.ToString()) * 1000 * 10);
+				try{
+					return new DateTime(SQLMaker.UnixTime.Ticks + long.Parse(o.ToString()) * 1000 * 10);
+				}catch(Exception e ){
+					return DateTime.Parse(o.ToString());
+				}
 			}
 		}
 		public override object ToJson (object o)
 		{
+			return (long)((((DateTime)o) - SQLMaker.UnixTime).TotalSeconds);
+		}
+		public override object FromDb (object o)
+		{
+			return new DateTime(SQLMaker.UnixTime.Ticks + (long)o * 1000 * 10);
+		}
+
+		public override object ToDb (object o)
+		{
 			return (long)((((DateTime)o) - SQLMaker.UnixTime).TotalMilliseconds);
 		}
 	}
+	public class BoolValueConverter : ValueConverter{
+		public override object FromJson (object o)
+		{
+			if(o == null){
+				return false;
+			}else if(o is long){
+				return (long)o > 0;
+			}else if(o is int){
+				return (int)o > 0;
+			}else if(o is double){
+				return (double)o > 0;
+			}else if(o is float){
+				return (float)o > 0;
+			}else if(o is bool){
+			    return (bool)o;
+			}else{
+				return bool.Parse( o.ToString());
+			}
+		}
+	}
+	
 	public class DictionaryValueConverter : ValueConverter{
 		public override object FromJson (object o)
 		{
@@ -180,6 +214,50 @@ namespace UnityORM
 			return JSONMapper.DefaultJsonMapper.Write(o);
 		}
 		
+	}
+	
+	public class ArrayValueConverter : ValueConverter{
+		public ClassDesc desc;
+		
+		public ArrayValueConverter(ClassDesc desc){
+			this.desc = desc;
+		}
+		public override object FromJson (object o)
+		{
+			if(o == null){
+				return null;
+			}else{
+				
+				var obj = JSONMapper.DefaultJsonMapper.ReadFromJSONObject(desc.ClassType,o);
+				
+				return obj;
+			}
+		}
+		public override object FromDb (object o)
+		{
+			if(o == null){
+				return null;
+			}else if(o is string){
+				var obj = JSONMapper.DefaultJsonMapper.Read(desc.ClassType,o as string);
+				
+				return obj;
+			}else{
+				throw new Exception(string.Format( "Fail to cast from {0} to {1}",o.GetType().Name,desc.ClassType.Name));
+			}
+		}
+		
+		public override object ToJson (object o)
+		{
+			if(o.GetType().IsArray){
+				return JSONMapper.DefaultJsonMapper.ToJsonObject((object[])o);
+			}else{
+				return JSONMapper.DefaultJsonMapper.ToJsonObject(o);
+			}
+		}
+		public override object ToDb (object o)
+		{
+			return JSONMapper.DefaultJsonMapper.Write(o);
+		}
 	}
 }
 
